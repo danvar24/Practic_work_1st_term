@@ -9,7 +9,6 @@ class ImageEditorApp:
         self.root = root
         self.root.title("Редактор изображений")
 
-        # Переменные состояния
         self.image = None
         self.tk_image = None
         self.filename = None
@@ -20,27 +19,25 @@ class ImageEditorApp:
         self.create_widgets()
 
     def create_widgets(self):
-        # Основной фрейм для кнопок
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
         # Кнопки управления
-        self.load_button = tk.Button(
-            button_frame,
-            text="Загрузить",
-            command=self.load_image
-        )
-        self.load_button.grid(row=0, column=0, padx=5)
+        buttons = [
+            ("Загрузить", self.load_image),
+            ("Камера", self.toggle_webcam),
+            ("Изменить размер", self.resize_image),
+        ]
 
-        self.webcam_button = tk.Button(
-            button_frame,
-            text="Камера",
-            command=self.toggle_webcam
-        )
-        self.webcam_button.grid(row=0, column=1, padx=5)
+        for col, (text, command) in enumerate(buttons):
+            tk.Button(
+                button_frame,
+                text=text,
+                command=command
+            ).grid(row=0, column=col, padx=5)
 
         # Элементы для работы с каналами
-        tk.Label(button_frame, text="Канал:").grid(row=0, column=2, padx=5)
+        tk.Label(button_frame, text="Канал:").grid(row=0, column=3, padx=5)
 
         self.channel_var = tk.StringVar(value="red")
         channels = ["red", "green", "blue"]
@@ -50,18 +47,60 @@ class ImageEditorApp:
             *channels,
             command=self.show_channel
         )
-        self.channel_menu.grid(row=0, column=3, padx=5)
+        self.channel_menu.grid(row=0, column=4, padx=5)
 
         self.reset_button = tk.Button(
             button_frame,
             text="Сброс",
             command=self.restore_original
         )
-        self.reset_button.grid(row=0, column=4, padx=5)
+        self.reset_button.grid(row=0, column=5, padx=5)
 
-        # Область отображения изображения
         self.image_label = tk.Label(self.root)
         self.image_label.pack()
+
+    def resize_image(self):
+        """Открывает диалог для изменения размера изображения"""
+        if not self.image:
+            messagebox.showwarning("Предупреждение", "Сначала загрузите изображение")
+            return
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Изменение размера")
+        dialog.resizable(False, False)
+
+        # Поля ввода
+        tk.Label(dialog, text="Ширина:").grid(row=0, column=0, padx=5, pady=5)
+        width_entry = tk.Entry(dialog)
+        width_entry.grid(row=0, column=1, padx=5, pady=5)
+        width_entry.insert(0, str(self.image.width))
+
+        tk.Label(dialog, text="Высота:").grid(row=1, column=0, padx=5, pady=5)
+        height_entry = tk.Entry(dialog)
+        height_entry.grid(row=1, column=1, padx=5, pady=5)
+        height_entry.insert(0, str(self.image.height))
+
+        def apply_resize():
+            try:
+                width = int(width_entry.get())
+                height = int(height_entry.get())
+
+                if width <= 0 or height <= 0:
+                    raise ValueError("Размеры должны быть положительными")
+
+                self.image = self.image.resize((width, height), Image.LANCZOS)
+                self.display_image()
+                dialog.destroy()
+
+            except ValueError as e:
+                messagebox.showerror("Ошибка", f"Некорректные размеры: {e}")
+
+        # Кнопки диалога
+        tk.Button(
+            dialog,
+            text="Применить",
+            command=apply_resize
+        ).grid(row=2, column=0, columnspan=2, pady=10)
 
     def load_image(self):
         filetypes = [("Изображения", "*.jpg *.jpeg *.png")]
@@ -138,7 +177,6 @@ class ImageEditorApp:
 
     def display_image(self):
         if self.image:
-            # Масштабирование для отображения
             width, height = self.image.size
             max_size = 800
 
