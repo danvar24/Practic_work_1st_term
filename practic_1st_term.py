@@ -76,13 +76,35 @@ class ImageEditorApp:
             self.tk_image = ImageTk.PhotoImage(display_image)
             self.image_label.config(image=self.tk_image)
 
+    def toggle_webcam(self):
+        """Включает/выключает веб-камеру."""
+        if not self.camera_on:
+            self.start_webcam()
+        else:
+            self.stop_webcam()
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = ImageEditorApp(root)
-    root.mainloop()
+    def start_webcam(self):
+        """Запускает веб-камеру."""
+        self.camera_on = True
+        self.cap = cv2.VideoCapture(0)
+        self.webcam_button.config(text="Остановить камеру")
+        self.update_webcam()
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = ImageEditorApp(root)
-    root.mainloop()
+    def stop_webcam(self):
+        """Останавливает веб-камеру."""
+        self.camera_on = False
+        if self.cap:
+            self.cap.release()
+        self.webcam_button.config(text="Снять с веб-камеры")
+
+    def update_webcam(self):
+        """Обновляет изображение с веб-камеры."""
+        if self.camera_on:
+            ret, frame = self.cap.read()
+            if ret:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                self.image = Image.fromarray(frame)
+                self.display_image()
+            self.root.after(10, self.update_webcam)
+
+
