@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageEnhance
 import cv2
 
 
@@ -22,54 +22,98 @@ class ImageEditorApp:
         button_frame = tk.Frame(self.root)
         button_frame.pack(pady=10)
 
-        # Кнопки управления
-        buttons = [
+        # Основные кнопки управления
+        controls = [
             ("Загрузить", self.load_image),
             ("Камера", self.toggle_webcam),
             ("Изменить размер", self.resize_image),
+            ("Яркость", self.adjust_brightness),
         ]
 
-        for col, (text, command) in enumerate(buttons):
+        for col, (text, cmd) in enumerate(controls):
             tk.Button(
                 button_frame,
                 text=text,
-                command=command
+                command=cmd
             ).grid(row=0, column=col, padx=5)
 
-        # Элементы для работы с каналами
-        tk.Label(button_frame, text="Канал:").grid(row=0, column=3, padx=5)
-
+        # Управление цветовыми каналами
+        tk.Label(button_frame, text="Канал:").grid(row=0, column=4, padx=5)
         self.channel_var = tk.StringVar(value="red")
-        channels = ["red", "green", "blue"]
         self.channel_menu = tk.OptionMenu(
             button_frame,
             self.channel_var,
-            *channels,
+            "red", "green", "blue",
             command=self.show_channel
         )
-        self.channel_menu.grid(row=0, column=4, padx=5)
+        self.channel_menu.grid(row=0, column=5, padx=5)
 
         self.reset_button = tk.Button(
             button_frame,
             text="Сброс",
             command=self.restore_original
         )
-        self.reset_button.grid(row=0, column=5, padx=5)
+        self.reset_button.grid(row=0, column=6, padx=5)
 
         self.image_label = tk.Label(self.root)
         self.image_label.pack()
 
+    def adjust_brightness(self):
+        """Диалог для регулировки яркости изображения"""
+        if not self.image:
+            messagebox.showwarning("Внимание", "Сначала загрузите изображение")
+            return
+
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Регулировка яркости")
+        dialog.resizable(False, False)
+
+        # Слайдер для яркости
+        tk.Label(dialog, text="Уровень яркости:").pack(pady=5)
+        brightness_scale = tk.Scale(
+            dialog,
+            from_=0,
+            to_=200,
+            orient=tk.HORIZONTAL,
+            length=300
+        )
+        brightness_scale.set(100)  # Значение по умолчанию (100%)
+        brightness_scale.pack(padx=10, pady=5)
+
+        def apply_brightness():
+            try:
+                factor = brightness_scale.get() / 100.0
+                enhancer = ImageEnhance.Brightness(self.image)
+                self.image = enhancer.enhance(factor)
+                self.display_image()
+                dialog.destroy()
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Не удалось изменить яркость: {str(e)}")
+
+        # Кнопки управления
+        btn_frame = tk.Frame(dialog)
+        btn_frame.pack(pady=10)
+
+        tk.Button(
+            btn_frame,
+            text="Применить",
+            command=apply_brightness
+        ).pack(side=tk.LEFT, padx=10)
+
+        tk.Button(
+            btn_frame,
+            text="Отмена",
+            command=dialog.destroy
+        ).pack(side=tk.LEFT, padx=10)
+
     def resize_image(self):
-        """Открывает диалог для изменения размера изображения"""
         if not self.image:
             messagebox.showwarning("Предупреждение", "Сначала загрузите изображение")
             return
 
         dialog = tk.Toplevel(self.root)
         dialog.title("Изменение размера")
-        dialog.resizable(False, False)
 
-        # Поля ввода
         tk.Label(dialog, text="Ширина:").grid(row=0, column=0, padx=5, pady=5)
         width_entry = tk.Entry(dialog)
         width_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -91,11 +135,9 @@ class ImageEditorApp:
                 self.image = self.image.resize((width, height), Image.LANCZOS)
                 self.display_image()
                 dialog.destroy()
-
             except ValueError as e:
                 messagebox.showerror("Ошибка", f"Некорректные размеры: {e}")
 
-        # Кнопки диалога
         tk.Button(
             dialog,
             text="Применить",
@@ -165,7 +207,6 @@ class ImageEditorApp:
 
             self.image = Image.merge("RGB", (r, g, b))
             self.display_image()
-
         except Exception as e:
             messagebox.showerror("Ошибка", f"Ошибка обработки: {str(e)}")
 
