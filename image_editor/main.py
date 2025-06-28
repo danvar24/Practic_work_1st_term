@@ -348,8 +348,11 @@ class ImageEditorApp:
             command=apply_rectangle
         ).grid(row=4, columnspan=2)
 
-
-if __name__ == "__main__":
+def main():
+    """Точка входа для запуска приложения"""
     root = tk.Tk()
     app = ImageEditorApp(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
