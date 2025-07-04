@@ -60,7 +60,7 @@ pip install .
 
 5. Запуск 
 ```
-python -m image_editor.main
+python -m image_editor
 ```
 
 ## 🎨 Использование
@@ -96,7 +96,7 @@ python setup.py sdist bdist_wheel
 ### Создание исполняемого файла
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --name ImageEditor image_editor/main.py
+pyinstaller --onefile --windowed --name ImageEditor image_editor/app.py
 ```
 
 ## 📁 Структура проекта
