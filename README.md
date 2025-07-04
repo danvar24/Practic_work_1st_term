@@ -61,6 +61,10 @@ pip install .
 5. Запуск 
 ```
 python -m image_editor
+
+#или
+
+python image_editor/app.py
 ```
 
 ## 🎨 Использование
